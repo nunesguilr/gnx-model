@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GNX - Gestor de Nexos</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- NOTIFICATION ON TOAST -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app">
+        <!-- AUTH VIEW -->
+        <div id="auth-view" class="view">
+            <div class="auth-container glass">
+                <div class="auth-header">
+                    <div class="brand">
+                        <i data-lucide="zap" class="brand-icon"></i>
+                        <h1>GNX</h1>
+                    </div>
+                    <p>Gestor de Nexos</p>
+                </div>
+                
+                <form id="login-form">
+                    <div class="input-group">
+                        <label>E-mail</label>
+                        <input type="email" id="login-email" required placeholder="seu@email.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full shadow-glow">Entrar no Sistema</button>
+                    <div class="auth-links">
+                        <a href="#" id="link-register">Criar uma conta</a>
+                        <a href="#" id="link-forgot">Esqueci a senha</a>
+                    </div>
+                </form>
+
+                <form id="register-form" class="hidden">
+                    <div class="input-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="reg-name" required placeholder="Seu Nome">
+                    </div>
+                    <div class="input-group">
+                        <label>E-mail</label>
+                        <input type="email" id="reg-email" required placeholder="seu@email.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <input type="password" id="reg-password" required placeholder="••••••••">
+                    </div>
+                    <div class="input-group">
+                        <label>Empresa</label>
+                        <input type="text" id="reg-empresa" required placeholder="Sua Empresa">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full shadow-glow">Cadastrar</button>
+                    <div class="auth-links">
+                        <a href="#" id="link-login">Já tenho uma conta</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MAIN DASHBOARD LAYOUT -->
+        <div id="main-layout" class="view hidden">
+            <!-- SIDEBAR -->
+            <aside class="sidebar glass-sidebar">
+                <div class="sidebar-brand">
+                    <i data-lucide="zap" class="text-primary"></i>
+                    <h2>GNX</h2>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#dashboard" class="nav-item active" data-view="dashboard">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#clientes" class="nav-item" data-view="clientes">
+                        <i data-lucide="users"></i>
+                        <span>Clientes</span>
+                    </a>
+                    <a href="#produtos" class="nav-item" data-view="produtos">
+                        <i data-lucide="package"></i>
+                        <span>Produtos</span>
+                    </a>
+                    <a href="#vendas" class="nav-item" data-view="vendas">
+                        <i data-lucide="shopping-cart"></i>
+                        <span>Vendas</span>
+                    </a>
+                    <a href="#parcelas" class="nav-item" data-view="parcelas">
+                        <i data-lucide="credit-card"></i>
+                        <span>Parcelas</span>
+                        <span id="parcelas-badge" class="badge bg-danger hidden">0</span>
+                    </a>
+                    <a href="#relatorios" class="nav-item" data-view="relatorios">
+                        <i data-lucide="bar-chart-2"></i>
+                        <span>Relatórios</span>
+                    </a>
+                </nav>
+                <div class="sidebar-footer">
+                    <button id="btn-logout" class="btn btn-ghost w-full justify-start">
+                        <i data-lucide="log-out"></i> Sair
+                    </button>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT -->
+            <main class="content-area">
+                <header class="top-header glass-header">
+                    <div>
+                        <h2 id="page-title" class="page-title">Dashboard</h2>
+                    </div>
+                    <div class="header-actions">
+                        <button class="icon-btn relative" title="Notificações">
+                            <i data-lucide="bell"></i>
+                            <span id="notif-badge" class="indicator hidden"></span>
+                        </button>
+                        <div class="user-profile">
+                            <div class="avatar">
+                                <span id="user-initial">A</span>
+                            </div>
+                            <div class="user-info">
+                                <span id="user-name" class="name">Admin</span>
+                                <span id="user-company" class="company">Empresa</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="scroll-wrapper">
+                    <div class="pages-container">
+                        
+                        <!-- DASHBOARD VIEW -->
+                        <div id="dashboard-view" class="page-view">
+                            <div class="metrics-grid">
+                                <div class="metric-card glass">
+                                    <div class="metric-header">
+                                        <h3>Vendas (Mês)</h3>
+                                        <div class="icon-box bg-primary-soft"><i data-lucide="trending-up"></i></div>
+                                    </div>
+                                    <div class="metric-value" id="dash-vendas-mes">0</div>
+                                </div>
+                                <div class="metric-card glass">
+                                    <div class="metric-header">
+                                        <h3>Faturamento</h3>
+                                        <div class="icon-box bg-success-soft"><i data-lucide="dollar-sign"></i></div>
+                                    </div>
+                                    <div class="metric-value" id="dash-faturamento">R$ 0,00</div>
+                                </div>
+                                <div class="metric-card glass">
+                                    <div class="metric-header">
+                                        <h3>Lucro Estimado</h3>
+                                        <div class="icon-box bg-info-soft"><i data-lucide="pie-chart"></i></div>
+                                    </div>
+                                    <div class="metric-value" id="dash-lucro">R$ 0,00</div>
+                                </div>
+                                <div class="metric-card glass">
+                                    <div class="metric-header">
+                                        <h3>Ticket Médio</h3>
+                                        <div class="icon-box bg-warning-soft"><i data-lucide="target"></i></div>
+                                    </div>
+                                    <div class="metric-value" id="dash-ticket">R$ 0,00</div>
+                                </div>
+                            </div>
+                            
+                            <div class="dashboard-grid mt-6">
+                                <div class="glass panel">
+                                    <div class="panel-header">
+                                        <h3>Últimas Vendas</h3>
+                                        <button class="btn btn-sm btn-ghost" onclick="app.navigate('vendas')">Ver todas</button>
+                                    </div>
+                                    <div class="table-container">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nota</th>
+                                                    <th>Cliente</th>
+                                                    <th>Data</th>
+                                                    <th>Valor</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="dash-ultimas-vendas">
+                                                <!-- Injected via JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="glass panel">
+                                    <div class="panel-header">
+                                        <h3>Alertas de Parcelas</h3>
+                                    </div>
+                                    <div class="alert-list" id="dash-alertas-parcelas">
+                                        <!-- Injected via JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CLIENTES VIEW -->
+                        <div id="clientes-view" class="page-view hidden">
+                            <div class="actions-bar glass flex-between">
+                                <div class="search-box">
+                                    <i data-lucide="search"></i>
+                                    <input type="text" id="search-clientes" placeholder="Buscar clientes...">
+                                </div>
+                                <button class="btn btn-primary" onclick="app.openModal('modal-cliente')">
+                                    <i data-lucide="plus"></i> Novo Cliente
+                                </button>
+                            </div>
+                            <div class="glass panel mt-4">
+                                <div class="table-container">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Email</th>
+                                                <th>Telefone</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="table-clientes"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PRODUTOS VIEW -->
+                        <div id="produtos-view" class="page-view hidden">
+                            <div class="actions-bar glass flex-between">
+                                <div class="search-box">
+                                    <i data-lucide="search"></i>
+                                    <input type="text" id="search-produtos" placeholder="Buscar produtos...">
+                                </div>
+                                <button class="btn btn-primary" onclick="app.openModal('modal-produto')">
+                                    <i data-lucide="plus"></i> Novo Produto
+                                </button>
+                            </div>
+                            <div class="glass panel mt-4">
+                                <div class="table-container">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Descrição</th>
+                                                <th>Preço Compra</th>
+                                                <th>Preço Venda</th>
+                                                <th>Margem</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="table-produtos"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VENDAS VIEW -->
+                        <div id="vendas-view" class="page-view hidden">
+                            <div class="actions-bar glass flex-between">
+                                <button class="btn btn-primary" onclick="app.openModal('modal-venda')">
+                                    <i data-lucide="plus"></i> Nova Venda
+                                </button>
+                            </div>
+                            <div class="glass panel mt-4">
+                                <div class="table-container">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Número</th>
+                                                <th>Cliente</th>
+                                                <th>Data</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="table-vendas"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PARCELAS VIEW -->
+                        <div id="parcelas-view" class="page-view hidden">
+                            <div class="glass panel mt-4">
+                                <div class="tabs mb-4">
+                                    <button class="tab active" data-filter="todas">Todas</button>
+                                    <button class="tab" data-filter="pendente">Pendentes</button>
+                                    <button class="tab" data-filter="atrasado">Atrasadas</button>
+                                    <button class="tab" data-filter="pago">Pagas</button>
+                                </div>
+                                <div class="table-container">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Venda / Cliente</th>
+                                                <th>Parcela</th>
+                                                <th>Vencimento</th>
+                                                <th>Valor</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="table-parcelas"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RELATORIOS VIEW -->
+                        <div id="relatorios-view" class="page-view hidden">
+                            <div class="glass panel report-panel">
+                                <h3>Gerar Relatório de Vendas</h3>
+                                <div class="grid grid-3 mt-4">
+                                    <div class="input-group">
+                                        <label>Data Início</label>
+                                        <input type="date" id="rel-start">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Data Fim</label>
+                                        <input type="date" id="rel-end">
+                                    </div>
+                                    <div class="input-group flex items-end">
+                                        <button class="btn btn-primary w-full" onclick="app.generateReport()">Gerar PDF</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Mock chart container -->
+                            <div class="glass panel mt-6">
+                                <h3>Gráfico de Faturamento Mês a Mês</h3>
+                                <div class="chart-mock" id="chart-container">
+                                    <!-- Simple css bars here -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Modal Cliente -->
+    <div id="modal-cliente" class="modal-overlay hidden">
+        <div class="modal glass-modal">
+            <div class="modal-header">
+                <h3 id="cliente-modal-title">Novo Cliente</h3>
+                <button class="icon-btn" onclick="app.closeModal('modal-cliente')"><i data-lucide="x"></i></button>
+            </div>
+            <form id="form-cliente">
+                <input type="hidden" id="cli-id">
+                <div class="input-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="cli-nome" required>
+                </div>
+                <div class="input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="cli-email">
+                </div>
+                <div class="grid grid-2">
+                    <div class="input-group">
+                        <label>Telefone</label>
+                        <input type="text" id="cli-telefone">
+                    </div>
+                    <div class="input-group">
+                        <label>Endereço</label>
+                        <input type="text" id="cli-endereco">
+                    </div>
+                </div>
+                <div class="modal-footer mt-4">
+                    <button type="button" class="btn btn-ghost" onclick="app.closeModal('modal-cliente')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Produto -->
+    <div id="modal-produto" class="modal-overlay hidden">
+        <div class="modal glass-modal">
+            <div class="modal-header">
+                <h3 id="produto-modal-title">Novo Produto</h3>
+                <button class="icon-btn" onclick="app.closeModal('modal-produto')"><i data-lucide="x"></i></button>
+            </div>
+            <form id="form-produto">
+                <input type="hidden" id="prod-id">
+                <div class="input-group">
+                    <label>Nome do Produto</label>
+                    <input type="text" id="prod-nome" required>
+                </div>
+                <div class="input-group">
+                    <label>Descrição</label>
+                    <input type="text" id="prod-desc">
+                </div>
+                <div class="grid grid-2">
+                    <div class="input-group">
+                        <label>Preço de Compra (R$)</label>
+                        <input type="number" step="0.01" id="prod-compra" required oninput="app.calcMargin()">
+                    </div>
+                    <div class="input-group">
+                        <label>Preço de Venda (R$)</label>
+                        <input type="number" step="0.01" id="prod-venda" required oninput="app.calcMargin()">
+                    </div>
+                </div>
+                <div class="text-sm mt-2 text-primary">
+                    Margem Estimada: <strong id="prod-margin-display">0.00%</strong>
+                </div>
+                <div class="modal-footer mt-4">
+                    <button type="button" class="btn btn-ghost" onclick="app.closeModal('modal-produto')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Venda -->
+    <div id="modal-venda" class="modal-overlay hidden">
+        <div class="modal glass-modal modal-lg">
+            <div class="modal-header">
+                <h3>Registrar Nova Venda</h3>
+                <button class="icon-btn" onclick="app.closeModal('modal-venda')"><i data-lucide="x"></i></button>
+            </div>
+            <form id="form-venda">
+                <div class="grid grid-2">
+                    <div class="input-group">
+                        <label>Cliente</label>
+                        <select id="venda-cliente" required></select>
+                    </div>
+                    <div class="input-group">
+                        <label>Status</label>
+                        <select id="venda-status">
+                            <option value="pendente">Pendente</option>
+                            <option value="pago">Pago</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="divider">Produtos</div>
+                
+                <div class="flex gap-2">
+                    <div class="input-group flex-1">
+                        <select id="venda-produto-sel"></select>
+                    </div>
+                    <div class="input-group w-24">
+                        <input type="number" id="venda-qtd" value="1" min="1">
+                    </div>
+                    <button type="button" class="btn btn-secondary mt-1" onclick="app.addVendaItem()">Adicionar</button>
+                </div>
+
+                <div class="venda-items-list mt-2">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Qtd</th>
+                                <th>Unit.</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="venda-items-tbody"></tbody>
+                    </table>
+                </div>
+                
+                <div class="text-right mt-4 mb-4">
+                    <h3>Total: <span id="venda-total" class="text-primary font-bold">R$ 0,00</span></h3>
+                </div>
+
+                <div class="divider">Parcelamento Automático</div>
+                <div class="grid grid-2">
+                    <div class="input-group">
+                        <label>Número de Parcelas</label>
+                        <input type="number" id="venda-parcelas" value="1" min="1" max="24">
+                    </div>
+                    <div class="input-group">
+                        <label>Intervalo em Dias (Padrão 30)</label>
+                        <input type="number" id="venda-intervalo" value="30" min="1">
+                    </div>
+                </div>
+
+                <div class="modal-footer mt-6">
+                    <button type="button" class="btn btn-ghost" onclick="app.closeModal('modal-venda')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Gerar Venda e Parcelas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
