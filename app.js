@@ -1152,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Venda Form
-    document.getElementById('form-venda').addEventListener('submit', (e) => {
+    document.getElementById('form-venda').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (currentVendaItems.length === 0) {
             showToast('Adicione pelo menos um produto!', 'error');
@@ -1166,58 +1166,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const total = currentVendaItems.reduce((acc, i) => acc + i.subtotal, 0);
 
-        // Calculate next sequence num
         let nextNum = 1;
         if (appData.vendas.length > 0) {
             nextNum = Math.max(...appData.vendas.map(v => parseInt(v.num) || 0)) + 1;
         }
 
-        const numStr = nextNum.toString().padStart(5, '0');
-        const vendaId = generateId();
-        const dataHj = new Date().toISOString().split('T')[0];
+        const finalStatus = numParc > 1 ? 'pendente' : status;
 
-        const nVenda = {
-            id: vendaId,
-            num: numStr,
-            clientId: clientId,
-            date: dataHj,
-            items: [...currentVendaItems],
-            total: total,
-            status: numParc > 1 ? 'pendente' : status
-        };
+        const { data: sData, error: sErr } = await supabase.from('sales').insert({
+            company_id: currentUser.company_id,
+            client_id: clientId,
+            user_id: currentUser.id,
+            sale_number: nextNum,
+            date: new Date().toISOString().split('T')[0],
+            total_amount: total,
+            status: finalStatus
+        }).select().single();
 
-        appData.vendas.push(nVenda);
+        if (sErr) { showToast(sErr.message, 'error'); return; }
 
-        // Generate Parcels
+        const itemsToInsert = currentVendaItems.map(i => {
+            let theProd = appData.produtos.find(p => p.id === i.prodId);
+            return {
+                sale_id: sData.id,
+                product_id: i.prodId,
+                quantity: i.qtd,
+                unit_price: i.preco,
+                cost_price: theProd ? theProd.compra : 0
+            };
+        });
+        await supabase.from('sale_items').insert(itemsToInsert);
+
         const valParc = total / numParc;
         const dtBase = new Date();
+        const installmentsToInsert = [];
 
         for (let i = 1; i <= numParc; i++) {
             let pDate = new Date(dtBase);
-            if (i > 1) { // Primeira parcela é a vista, ou com prazo 1 intervalo. Vamos considerar a partir de 1 mes se numParc > 1
-                pDate.setDate(pDate.getDate() + (interDias * (i - 1)));
-            }
+            if (i > 1) pDate.setDate(pDate.getDate() + (interDias * (i - 1)));
 
-            appData.parcelas.push({
-                id: generateId(),
-                vendaId: vendaId,
-                clientId: clientId,
-                num: `${i}/${numParc}`,
-                date: pDate.toISOString().split('T')[0],
-                value: valParc,
-                status: (i === 1 && status === 'pago') ? 'pago' : 'pendente'
+            installmentsToInsert.push({
+                company_id: currentUser.company_id,
+                sale_id: sData.id,
+                client_id: clientId,
+                type: 'parcela',
+                installment_number: i,
+                description: i + '/' + numParc,
+                due_date: pDate.toISOString().split('T')[0],
+                original_amount: valParc,
+                status: (i === 1 && finalStatus === 'pago') ? 'pago' : 'pendente'
             });
         }
+        await supabase.from('installments').insert(installmentsToInsert);
 
-        saveState();
         app.closeModal('modal-venda');
-        showToast(`Venda #${numStr} registrada!`, 'success');
-        app.renderVendas();
-        app.updateBadges();
+        showToast('Venda registrada!', 'success');
     });
 
     // Form Adiantamento
-    document.getElementById('form-adiantamento').addEventListener('submit', (e) => {
+    document.getElementById('form-adiantamento').addEventListener('submit', async (e) => {
         e.preventDefault();
         const vId = document.getElementById('ad-venda-id').value;
         const v = appData.vendas.find(x => x.id === vId);
@@ -1226,95 +1233,46 @@ document.addEventListener('DOMContentLoaded', () => {
         let valor = parseFloat(document.getElementById('ad-valor').value);
         const dataStr = document.getElementById('ad-data').value;
 
-        if (valor <= 0) {
-            showToast('Valor inválido', 'error');
-            return;
-        }
+        if (valor <= 0) { showToast('Valor inválido', 'error'); return; }
 
-        // Get pending parcels for this sale, ordered by date
-        const pendentes = appData.parcelas.filter(p => p.vendaId === vId && p.status !== 'pago')
-            .sort((a, b) => new Date(a.date) - new Date(b.date));
+        const { data: instData, error: instErr } = await supabase.from('installments').insert({
+            company_id: currentUser.company_id,
+            sale_id: v.id,
+            client_id: v.clientId,
+            type: 'adiantamento',
+            description: 'Adiantamento/Avulso',
+            due_date: dataStr,
+            original_amount: valor,
+            status: 'pago'
+        }).select().single();
 
-        let remainingAdiantamento = valor;
-
-        // Abater das parcelas pendentes sucessivamente
-        for (let p of pendentes) {
-            if (remainingAdiantamento <= 0) break;
-
-            if (remainingAdiantamento >= p.value) {
-                // Pagou a parcela toda
-                remainingAdiantamento -= p.value;
-                p.status = 'pago';
-            } else {
-                // Pagou parte da parcela (desconta do valor da parcela atual, e o resto mantém pendente)
-                // Vamos criar uma nova parcela "Paga" e descontar o saldo da parcela original
-                appData.parcelas.push({
-                    id: generateId(),
-                    vendaId: v.id,
-                    clientId: v.clientId,
-                    num: 'Adi.' + p.num,
-                    date: dataStr,
-                    value: remainingAdiantamento,
-                    status: 'pago'
-                });
-                p.value -= remainingAdiantamento;
-                remainingAdiantamento = 0;
-            }
-        }
-
-        // Se sobrou saldo e pagou tudo, adicione o resto (ou verifique no limite)...
-        if (remainingAdiantamento > 0 && pendentes.length > 0) {
-            // Neste caso o usuário pagou a mais que a venda
-            appData.parcelas.push({
-                id: generateId(),
-                vendaId: v.id,
-                clientId: v.clientId,
-                num: 'Sobra Adiantamento',
-                date: dataStr,
-                value: remainingAdiantamento,
-                status: 'pago'
+        if (!instErr) {
+            await supabase.from('installment_payments').insert({
+                installment_id: instData.id,
+                amount: valor,
+                payment_date: dataStr
             });
-        } else if (valor > 0 && remainingAdiantamento === valor) {
-            // Pagou de uma vez algo sem mexer em pendentes, caso sem parcelas
-            appData.parcelas.push({
-                id: generateId(),
-                vendaId: v.id,
-                clientId: v.clientId,
-                num: 'Adiantamento',
-                date: dataStr,
-                value: valor,
-                status: 'pago'
-            });
+            showToast('Adiantamento registrado!', 'success');
+        } else {
+            showToast(instErr.message, 'error');
         }
 
-        // Check if fully paid
-        const allVendaParcels = appData.parcelas.filter(parc => parc.vendaId === v.id);
-        const allPaid = allVendaParcels.every(parc => parc.status === 'pago');
-        if (allPaid) {
-            v.status = 'pago';
-        }
-
-        saveState();
         app.closeModal('modal-adiantamento');
-        showToast('Adiantamento registrado com sucesso!', 'success');
-        app.abrirDetalheVenda(v.id);
-        app.updateBadges();
     });
 
     // Config Form
-    document.getElementById('form-config').addEventListener('submit', (e) => {
+    document.getElementById('form-config').addEventListener('submit', async (e) => {
         e.preventDefault();
         const color = document.getElementById('config-color').value;
         const bg = document.getElementById('config-bg').value;
         const opacity = document.getElementById('config-opacity').value;
 
-        if (!appData.settings) appData.settings = {};
-        appData.settings.primaryColor = color;
-        appData.settings.bgImage = bg;
-        appData.settings.panelOpacity = opacity;
-
-        saveState();
-        app.applySettings();
+        await supabase.from('company_settings').upsert({
+            company_id: currentUser.company_id,
+            primary_color: color,
+            bg_image_url: bg,
+            panel_opacity: opacity
+        });
         showToast('Configurações aplicadas com sucesso!', 'success');
     });
 
