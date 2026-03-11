@@ -38,9 +38,9 @@ O GNX foi criado para lojistas, prestadores de serviços, micro e pequenas empre
 ## 🛠 Arquitetura e Tecnologia (Under the Hood)
 O sistema GNX se destaca pela flexibilidade sem depender de infraestruturas pesadas locais.
 
-*   **Front-end Moderno:** Construído inteiramente com **Vanilla JavaScript, HTML5 e CSS3 puro**, garantindo que rode sem engasgos diretamente no navegador web, seja em computadores ou tablets.
+*   **Front-end Moderno e Minimalista:** Construído inteiramente com **Vanilla JavaScript, HTML5 e CSS3 puro**, garantindo que rode de forma eficiente em qualquer navegador sem a necessidade de frameworks pesados (Node.js, React, etc).
 *   **UI/UX Avançada:** Design em Dark Mode por padrão, fontes amigáveis (*Outfit* e *Inter* do Google Fonts), e uso intensivo de Custom Properties de CSS (Variáveis) para troca rápida de temas dinâmicos via JavaScript.
-*   **Persistência Descentralizada:** Os dados de toda a sua empresa, notas fiscais, logotipos, permissões e histórico operam guardados fluidamente sob criptografia na própria Cache (`localStorage`/`sessionStorage` em sessões) para uma experiência *PWA-like* que nunca cai ou precisa de servidores externos no ambiente de homologação.
+*   **Backend Serverless Eficiente:** Toda a persistência, autenticação e comunicação em Tempo Real (Realtime) é feita através do **Supabase** (PostgreSQL na Nuvem) com comunicação direta pelo front-end. Zero dependência de servidores Python, Go ou Node.js locais. Tudo é executado direto no lado do cliente com máxima eficiência.
 *   **Iconografia:** Adota o padrão minimalista e afiado do *Lucide Icons*.
 
 ---
